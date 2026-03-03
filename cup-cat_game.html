@@ -1,0 +1,440 @@
+<!doctype html> <!-- Diz ao navegador que este documento é HTML5 -->
+<html lang="pt-BR"> <!-- Define o idioma da página (português do Brasil) -->
+<head> <!-- Começo do cabeçalho (configurações e estilos) -->
+  <meta charset="utf-8"> <!-- Define o conjunto de caracteres (acentos funcionando) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Responsivo no celular -->
+  <title>Cup Game</title> <!-- Título da aba do navegador -->
+
+  <style> /* Início do CSS (estilo visual) */
+
+    /* =========================
+       PERSONALIZAÇÃO (CORES)
+       O aluno pode trocar as cores aqui
+       ========================= */
+    :root { /* Variáveis globais de CSS (fácil de personalizar) */
+      --cor-fundo: #fff8fb; /* Cor do fundo da página */
+      --cor-cartao: #ffffff; /* Cor do “cartão” do jogo */
+      --cor-borda: #1f7a5c; /* Cor da borda e detalhes */
+      --cor-texto: #1f7a5c; /* Cor do texto principal */
+      --cor-botao: #e9f8f2; /* Cor base dos botões */
+      --cor-botao2: #ffd7e6; /* Cor alternativa (ex: sair) */
+      --cor-botao-texto: #124b39; /* Cor do texto nos botões */
+      --cor-realce: #ff6aa6; /* Cor de confete/realce */
+    }
+
+    * { box-sizing: border-box; } /* Faz largura/altura funcionarem “direitinho” */
+
+    body { /* Estilo do corpo da página */
+      margin: 0; /* Remove margem padrão do navegador */
+      font-family: system-ui, Arial, sans-serif; /* Fonte simples e legível */
+      background: var(--cor-fundo); /* Usa a cor de fundo personalizada */
+      color: var(--cor-texto); /* Usa a cor de texto personalizada */
+      display: grid; /* Layout em grade */
+      place-items: center; /* Centraliza tudo no meio da tela */
+      min-height: 100vh; /* Garante altura mínima = altura da tela */
+    }
+
+    .card { /* Cartão central do jogo */
+      width: min(520px, 92vw); /* Largura máxima 520px, senão 92% da tela */
+      background: var(--cor-cartao); /* Fundo do cartão */
+      border: 4px solid var(--cor-borda); /* Borda verde (personalizável) */
+      border-radius: 20px; /* Canto arredondado */
+      padding: 18px; /* Espaço interno */
+      box-shadow: 0 10px 30px rgba(0,0,0,.08); /* Sombra leve */
+      position: relative; /* Permite posicionar elementos dentro */
+      overflow: hidden; /* Esconde “coisas” que passarem da borda */
+    }
+
+    h1 { /* Título */
+      margin: 0 0 10px; /* Espaçamento em volta do título */
+      font-size: 42px; /* Tamanho grande */
+      letter-spacing: 0.5px; /* Espaçamento entre letras */
+    }
+
+    .confetti { /* “Riscos” decorativos simples */
+      position: absolute; /* Fica por cima do cartão */
+      inset: 0; /* Ocupa todo o cartão */
+      pointer-events: none; /* Não atrapalha cliques */
+      background:
+        radial-gradient(circle at 15% 25%, var(--cor-realce) 0 2px, transparent 3px),
+        radial-gradient(circle at 85% 20%, var(--cor-realce) 0 2px, transparent 3px),
+        radial-gradient(circle at 20% 80%, var(--cor-realce) 0 2px, transparent 3px),
+        radial-gradient(circle at 80% 75%, var(--cor-realce) 0 2px, transparent 3px);
+      opacity: .7; /* Transparência */
+    }
+
+    .row { /* Linha de elementos (tempo/pontos) */
+      display: flex; /* Um ao lado do outro */
+      gap: 12px; /* Espaço entre itens */
+      flex-wrap: wrap; /* Quebra linha se faltar espaço */
+      align-items: center; /* Alinha verticalmente */
+      justify-content: space-between; /* Espaça bem */
+      margin-bottom: 12px; /* Espaço abaixo */
+    }
+
+    .badge { /* Caixinha “Tempo” e “Pontos” */
+      border: 3px solid var(--cor-borda); /* Borda */
+      border-radius: 14px; /* Arredondado */
+      padding: 8px 12px; /* Espaço interno */
+      font-weight: 700; /* Texto mais forte */
+      min-width: 150px; /* Largura mínima */
+      display: flex; /* Alinha dentro */
+      justify-content: space-between; /* Texto na esquerda, valor na direita */
+      align-items: center; /* Centraliza verticalmente */
+      background: #f6fffb; /* Fundo clarinho */
+    }
+
+    .value { /* Quadrinho do número */
+      display: inline-grid; /* Facilita centralizar */
+      place-items: center; /* Centraliza */
+      min-width: 38px; /* Largura mínima */
+      height: 32px; /* Altura fixa */
+      border-radius: 10px; /* Arredondado */
+      border: 2px solid var(--cor-borda); /* Borda */
+      background: white; /* Fundo */
+    }
+
+    .screen { /* “Telas” do jogo (home, game, end) */
+      display: none; /* Começam escondidas */
+    }
+
+    .screen.active { /* Tela visível */
+      display: block; /* Mostra */
+    }
+
+    .btn { /* Estilo base dos botões */
+      border: 3px solid var(--cor-borda); /* Borda */
+      background: var(--cor-botao); /* Fundo */
+      color: var(--cor-botao-texto); /* Cor do texto */
+      font-weight: 800; /* Texto forte */
+      padding: 10px 16px; /* Espaço interno */
+      border-radius: 14px; /* Arredondado */
+      cursor: pointer; /* Mãozinha */
+      font-size: 18px; /* Tamanho da fonte */
+    }
+
+    .btn.danger { /* Botão “Sair” (mais rosinha) */
+      background: var(--cor-botao2); /* Outra cor */
+    }
+
+    .btn:disabled { /* Estilo quando botão está desabilitado */
+      opacity: .5; /* Fica “apagado” */
+      cursor: not-allowed; /* Cursor de bloqueado */
+    }
+
+    .toggle { /* Linha do checkbox Som */
+      display: flex; /* Alinha */
+      gap: 10px; /* Espaço */
+      align-items: center; /* Centraliza */
+      margin-top: 10px; /* Espaço acima */
+      font-weight: 700; /* Texto forte */
+    }
+
+    #playArea { /* Área onde o cupcake aparece */
+      height: 260px; /* Altura fixa */
+      border: 3px dashed rgba(31,122,92,.5); /* Borda pontilhada */
+      border-radius: 18px; /* Arredondado */
+      position: relative; /* Para posicionar o alvo dentro */
+      background: linear-gradient(180deg, #ffffff, #f7fffb); /* Gradiente suave */
+      margin: 10px 0 14px; /* Espaço externo */
+    }
+
+    #target { /* O alvo clicável */
+      width: 110px; /* Largura do alvo */
+      height: 110px; /* Altura do alvo */
+      position: absolute; /* Para mover dentro da área */
+      display: grid; /* Centraliza imagem */
+      place-items: center; /* Centraliza */
+      cursor: pointer; /* Mãozinha */
+      user-select: none; /* Impede selecionar por engano */
+      touch-action: manipulation; /* Melhor toque no celular */
+      transition: transform .07s ease; /* Efeito leve ao clicar */
+    }
+
+    #target:active { /* Quando estiver clicando */
+      transform: scale(0.95); /* Dá sensação de “aperto” */
+    }
+
+    #target img { /* Imagem do cupcake */
+      width: 100%; /* Ocupa o alvo */
+      height: 100%; /* Ocupa o alvo */
+      object-fit: contain; /* Mantém proporção */
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,.15)); /* Sombra bonita */
+    }
+
+    .center { /* Centraliza itens em coluna */
+      display: grid; /* Grid */
+      gap: 10px; /* Espaço */
+      justify-items: center; /* Centraliza horizontalmente */
+      text-align: center; /* Texto central */
+    }
+
+    .note { /* Textinho menor */
+      opacity: .85; /* Menos destaque */
+      font-size: 14px; /* Menor */
+      margin-top: 6px; /* Espaço acima */
+    }
+
+  </style> <!-- Fim do CSS -->
+</head> <!-- Fim do cabeçalho -->
+
+<body> <!-- Começo do conteúdo visível -->
+  <main class="card"> <!-- Cartão principal -->
+    <div class="confetti"></div> <!-- Decoração de fundo -->
+
+    <!-- =========================
+         TELA 1: INÍCIO
+         ========================= -->
+    <section id="screenHome" class="screen active"> <!-- Seção da tela inicial -->
+      <h1 id="gameTitle">Cup Game</h1> <!-- Título (personalizável) -->
+
+      <div class="center"> <!-- Agrupa e centraliza -->
+        <button id="btnStart" class="btn">Jogar</button> <!-- Botão jogar -->
+        <label class="toggle"> <!-- Linha do som -->
+          <input id="chkSound" type="checkbox" checked> <!-- Checkbox do som -->
+          Som <!-- Texto -->
+        </label> <!-- Fim do label -->
+        <p class="note">Clique no cupcake o máximo que conseguir em 30 segundos!</p> <!-- Explicação -->
+      </div> <!-- Fim do center -->
+    </section> <!-- Fim da tela inicial -->
+
+    <!-- =========================
+         TELA 2: JOGO
+         ========================= -->
+    <section id="screenGame" class="screen"> <!-- Seção da tela de jogo -->
+      <div class="row"> <!-- Linha com tempo/pontos -->
+        <div class="badge"> <!-- Badge tempo -->
+          <span>Tempo:</span> <!-- Texto -->
+          <span id="timeValue" class="value">30</span> <!-- Valor do tempo -->
+        </div> <!-- Fim badge -->
+
+        <div class="badge"> <!-- Badge pontos -->
+          <span>Pontos:</span> <!-- Texto -->
+          <span id="scoreValue" class="value">0</span> <!-- Valor da pontuação -->
+        </div> <!-- Fim badge -->
+      </div> <!-- Fim row -->
+
+      <div id="playArea"> <!-- Área onde o alvo aparece -->
+        <div id="target" aria-label="Alvo"> <!-- Div clicável do alvo -->
+          <img id="targetImg" alt="Cupcake"> <!-- Imagem do alvo (personalizável) -->
+        </div> <!-- Fim target -->
+      </div> <!-- Fim playArea -->
+
+      <div class="row"> <!-- Linha dos botões -->
+        <button id="btnPause" class="btn">Pausar</button> <!-- Pausar/Continuar -->
+        <button id="btnExit" class="btn danger">Sair</button> <!-- Sair -->
+      </div> <!-- Fim row -->
+
+      <p id="feedback" class="note"></p> <!-- Feedback curto (ex: “Uhu!”) -->
+    </section> <!-- Fim tela de jogo -->
+
+    <!-- =========================
+         TELA 3: FIM
+         ========================= -->
+    <section id="screenEnd" class="screen"> <!-- Seção do final -->
+      <div class="center"> <!-- Centraliza -->
+        <h1>Fim de jogo!</h1> <!-- Título -->
+        <div class="badge" style="min-width: 220px;"> <!-- Badge maior -->
+          <span>Pontuação:</span> <!-- Texto -->
+          <span id="finalScore" class="value">0</span> <!-- Valor final -->
+        </div> <!-- Fim badge -->
+
+        <button id="btnRestart" class="btn">Jogar</button> <!-- Jogar de novo -->
+      </div> <!-- Fim center -->
+    </section> <!-- Fim tela final -->
+  </main> <!-- Fim do cartão -->
+
+  <script> // Início do JavaScript (lógica do jogo)
+
+    /* =========================
+       PERSONALIZAÇÃO (ALUNOS)
+       Troque aqui imagem, cores, textos e tempo do jogo
+       ========================= */
+
+    const CONFIG = { // Objeto com configurações fáceis de trocar
+      title: "Cup Game", // Título do jogo (aparece na tela inicial)
+      seconds: 30, // Duração da partida em segundos
+      scorePerHit: 1, // Quantos pontos ganha por acerto
+      feedbackHit: "Uhu! +1", // Texto quando acerta
+      feedbackMiss: "Ops! Errou", // Texto quando clica fora
+      // DICA: troque a imagem abaixo por qualquer URL (ou por um arquivo local)
+      // Exemplo local: "cupcake.png" (se o arquivo estiver na mesma pasta)
+      targetImageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Cupcake_icon.svg/256px-Cupcake_icon.svg.png",
+      // Ajuste o tamanho do alvo (em pixels) aqui:
+      targetSize: 110,
+    };
+
+    /* =========================
+       PEGAR ELEMENTOS DA TELA
+       ========================= */
+
+    const screenHome = document.getElementById("screenHome"); // Tela inicial
+    const screenGame = document.getElementById("screenGame"); // Tela do jogo
+    const screenEnd  = document.getElementById("screenEnd");  // Tela final
+
+    const gameTitle = document.getElementById("gameTitle"); // Título visível
+    const btnStart = document.getElementById("btnStart"); // Botão jogar
+    const chkSound = document.getElementById("chkSound"); // Checkbox som
+
+    const timeValue = document.getElementById("timeValue"); // Mostra tempo
+    const scoreValue = document.getElementById("scoreValue"); // Mostra pontos
+    const finalScore = document.getElementById("finalScore"); // Mostra pontos final
+
+    const playArea = document.getElementById("playArea"); // Área onde o alvo anda
+    const target = document.getElementById("target"); // O alvo clicável
+    const targetImg = document.getElementById("targetImg"); // A imagem do alvo
+
+    const btnPause = document.getElementById("btnPause"); // Botão pausar
+    const btnExit = document.getElementById("btnExit"); // Botão sair
+    const btnRestart = document.getElementById("btnRestart"); // Botão reiniciar
+
+    const feedback = document.getElementById("feedback"); // Texto de feedback
+
+    /* =========================
+       ESTADO DO JOGO (variáveis)
+       ========================= */
+
+    let score = 0; // Guarda a pontuação atual
+    let timeLeft = CONFIG.seconds; // Guarda o tempo restante
+    let timerId = null; // Guarda o “id” do setInterval do timer
+    let playing = false; // Indica se o jogo está rodando
+    let paused = false; // Indica se está pausado
+
+    /* =========================
+       FUNÇÕES ÚTEIS
+       ========================= */
+
+    function showScreen(which) { // Função para trocar de tela
+      screenHome.classList.remove("active"); // Esconde home
+      screenGame.classList.remove("active"); // Esconde game
+      screenEnd.classList.remove("active"); // Esconde end
+      which.classList.add("active"); // Mostra a tela escolhida
+    }
+
+    function randomInt(min, max) { // Retorna um número inteiro aleatório
+      return Math.floor(Math.random() * (max - min + 1)) + min; // Fórmula do aleatório inteiro
+    }
+
+    function moveTarget() { // Move o alvo para uma posição aleatória
+      const areaRect = playArea.getBoundingClientRect(); // Pega tamanho real da área
+      const size = CONFIG.targetSize; // Tamanho do alvo (configurável)
+
+      const maxX = Math.max(0, areaRect.width - size); // Limite de X para não sair da área
+      const maxY = Math.max(0, areaRect.height - size); // Limite de Y para não sair da área
+
+      const x = randomInt(0, Math.floor(maxX)); // X aleatório
+      const y = randomInt(0, Math.floor(maxY)); // Y aleatório
+
+      target.style.left = x + "px"; // Define posição X
+      target.style.top = y + "px"; // Define posição Y
+    }
+
+    function playBeep() { // Som simples de “bip” usando WebAudio
+      if (!chkSound.checked) return; // Se som estiver desligado, não toca
+      const ctx = new (window.AudioContext || window.webkitAudioContext)(); // Cria contexto de áudio
+      const osc = ctx.createOscillator(); // Cria oscilador (gera som)
+      const gain = ctx.createGain(); // Cria controle de volume
+      osc.type = "sine"; // Tipo de onda (seno = suave)
+      osc.frequency.value = 660; // Frequência do som (Hz)
+      gain.gain.value = 0.05; // Volume baixo (para não assustar)
+      osc.connect(gain); // Liga oscilador ao volume
+      gain.connect(ctx.destination); // Liga volume ao alto-falante
+      osc.start(); // Começa o som
+      osc.stop(ctx.currentTime + 0.08); // Para o som após 0.08s
+    }
+
+    function updateUI() { // Atualiza números na tela
+      timeValue.textContent = String(timeLeft); // Mostra tempo restante
+      scoreValue.textContent = String(score); // Mostra pontuação
+    }
+
+    function endGame() { // Finaliza a partida
+      playing = false; // Marca que não está jogando
+      paused = false; // Remove pausa
+      clearInterval(timerId); // Para o timer
+      timerId = null; // Limpa o id
+      finalScore.textContent = String(score); // Mostra pontuação final
+      showScreen(screenEnd); // Vai para a tela final
+    }
+
+    /* =========================
+       INICIAR / PAUSAR / SAIR
+       ========================= */
+
+    function startGame() { // Inicia uma nova partida
+      score = 0; // Zera pontos
+      timeLeft = CONFIG.seconds; // Reinicia tempo
+      playing = true; // Marca jogando
+      paused = false; // Não pausado
+      btnPause.textContent = "Pausar"; // Texto do botão pausar
+      feedback.textContent = ""; // Limpa feedback
+
+      updateUI(); // Atualiza tela
+      showScreen(screenGame); // Mostra tela do jogo
+      moveTarget(); // Coloca o alvo em uma posição
+
+      clearInterval(timerId); // Garante que não exista timer antigo
+      timerId = setInterval(() => { // Cria um timer que roda a cada 1 segundo
+        if (paused) return; // Se estiver pausado, não conta
+        timeLeft -= 1; // Diminui 1 segundo
+        updateUI(); // Atualiza tela
+        if (timeLeft <= 0) endGame(); // Se acabou o tempo, termina o jogo
+      }, 1000); // Intervalo de 1000ms = 1s
+    }
+
+    function togglePause() { // Alterna entre pausar e continuar
+      if (!playing) return; // Se não estiver jogando, ignora
+      paused = !paused; // Inverte o estado (true/false)
+      btnPause.textContent = paused ? "Continuar" : "Pausar"; // Troca o texto do botão
+      feedback.textContent = paused ? "Pausado" : ""; // Mostra “Pausado” ou limpa
+    }
+
+    function exitToHome() { // Sai do jogo e volta para o início
+      playing = false; // Para jogo
+      paused = false; // Remove pausa
+      clearInterval(timerId); // Para timer
+      timerId = null; // Limpa id
+      showScreen(screenHome); // Volta para a tela inicial
+    }
+
+    /* =========================
+       EVENTOS (cliques)
+       ========================= */
+
+    btnStart.addEventListener("click", startGame); // Quando clicar em Jogar, inicia
+
+    btnRestart.addEventListener("click", startGame); // Jogar de novo também inicia
+
+    btnPause.addEventListener("click", togglePause); // Pausar/Continuar
+
+    btnExit.addEventListener("click", exitToHome); // Sair volta ao início
+
+    target.addEventListener("click", (ev) => { // Clique no alvo
+      if (!playing || paused) return; // Se não estiver jogando ou estiver pausado, ignora
+      score += CONFIG.scorePerHit; // Soma pontos
+      feedback.textContent = CONFIG.feedbackHit; // Mostra feedback de acerto
+      playBeep(); // Toca um beep
+      updateUI(); // Atualiza números
+      moveTarget(); // Move o alvo para outro lugar
+      ev.stopPropagation(); // Impede que clique “vaze” para a área
+    });
+
+    playArea.addEventListener("click", () => { // Clique na área (fora do alvo)
+      if (!playing || paused) return; // Se não estiver jogando ou estiver pausado, ignora
+      feedback.textContent = CONFIG.feedbackMiss; // Mostra feedback de erro
+    });
+
+    /* =========================
+       CONFIGURAR VISUAL INICIAL
+       ========================= */
+
+    gameTitle.textContent = CONFIG.title; // Aplica o título personalizado
+    targetImg.src = CONFIG.targetImageUrl; // Define a imagem do alvo (cupcake)
+    target.style.width = CONFIG.targetSize + "px"; // Aplica tamanho do alvo (largura)
+    target.style.height = CONFIG.targetSize + "px"; // Aplica tamanho do alvo (altura)
+    timeValue.textContent = String(CONFIG.seconds); // Mostra o tempo inicial
+    scoreValue.textContent = "0"; // Mostra a pontuação inicial
+
+  </script> <!-- Fim do JavaScript -->
+</body> <!-- Fim do conteúdo -->
+</html> <!-- Fim do documento -->
